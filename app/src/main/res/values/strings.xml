@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">tracker</string>
+    <string name="send_location">Send Location</string>
+    <string name="main_message">Location is tracked!</string>
+    <string name="save_user_btn">save</string>
+    <string name="add_user_phone">Add user</string>
+    <string name="json_view">User as Json</string>
+</resources>
