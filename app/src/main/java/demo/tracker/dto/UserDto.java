@@ -5,7 +5,7 @@ import java.util.List;
 
 public class UserDto {
 	private String userId;
-	private boolean userStatus = false;
+	private boolean userStatus;
 	private List<DateDto> dates = new ArrayList<>();
 
 	public String getUserId() {

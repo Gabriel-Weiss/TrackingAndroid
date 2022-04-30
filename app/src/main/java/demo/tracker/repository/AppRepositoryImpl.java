@@ -20,7 +20,7 @@ import io.realm.RealmResults;
 
 public class AppRepositoryImpl implements AppRepository {
     private static final String TAG = "AppRepositoryImpl";
-    public static final String CODE = Build.MANUFACTURER + "-" + Build.ID;
+    private static final String CODE = Build.MANUFACTURER + "-" + Build.ID;
 
     private Realm getRealm() {
         return Realm.getDefaultInstance();

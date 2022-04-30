@@ -50,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE = 33;
-    private FusedLocationProviderClient fusedLocationProviderClient;
     private final AppRepository appRepository;
     private TextView jsonView;
 
@@ -65,11 +64,10 @@ public class MainActivity extends AppCompatActivity {
         requestPermissions(new String[]{"android.permission.ACCESS_FINE_LOCATION"}, REQUEST_CODE);
         jsonView = findViewById(R.id.json_view);
 
-
         appRepository.checkUser();
+        postUser();
+//        postUserData();
 //        new Timer().schedule(new CustomTimer(), 10000, 5000);
-
-        postData();
 
     }
 
@@ -85,7 +83,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void getLocation() {
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
+        FusedLocationProviderClient fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(MainActivity.this);
         if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationProviderClient.getLastLocation().addOnSuccessListener(
@@ -96,14 +94,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void postData() {
+    private void postUser() {
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-        String url = null;
+        String url = Utilities.getProperty("post_user_url", getApplicationContext());
+
+        AppUser appUser = appRepository.readUserFromRealm();
+        JSONObject jsonUser = new JSONObject();
         try {
-            url = Utilities.getProperty("post_user_url", getApplicationContext());
-        } catch (IOException e) {
-            Log.e(TAG, "Utilities.getProperty(): failed", e);
+            jsonUser.put("userId", appUser.getUserCode());
+            jsonUser.put("userStatus", appUser.isUserStatus());
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
+
+        jsonView.setText(jsonUser.toString());
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
+                Request.Method.POST, url, jsonUser,
+                response -> Log.i("onResponse() called. ", "User was posted successfully"),
+                error -> Log.e("onErrorResponse: ", error.toString()));
+
+        requestQueue.add(jsonObjectRequest);
+    }
+
+    public void postUserData() {
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        String url = Utilities.getProperty("post_user_url", getApplicationContext());
 
         AppUser appUser = appRepository.readUserFromRealm();
         List<SavedDate> dates = appRepository.readDatesFromRealm();
@@ -127,13 +142,7 @@ public class MainActivity extends AppCompatActivity {
         jsonView.setText(jsonUser.toString());
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(
                 Request.Method.POST, url, jsonUser,
-                response -> {
-                    try {
-                        Log.i("onResponse: ", response.getString("userId"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
-                },
+                response -> Log.i("onResponse() called. ", "Data was posted successfully"),
                 error -> Log.e("onErrorResponse: ", error.toString()));
 
         requestQueue.add(jsonObjectRequest);
