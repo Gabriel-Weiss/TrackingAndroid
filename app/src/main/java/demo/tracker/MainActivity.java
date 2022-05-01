@@ -5,9 +5,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -20,25 +21,17 @@ import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.gson.Gson;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import demo.tracker.dto.DateDto;
-import demo.tracker.dto.LocationDto;
 import demo.tracker.dto.UserDto;
 import demo.tracker.entity.AppUser;
 import demo.tracker.entity.SavedDate;
-import demo.tracker.entity.SavedTime;
 import demo.tracker.mapper.Mapper;
 import demo.tracker.repository.AppRepository;
 import demo.tracker.repository.AppRepositoryImpl;
@@ -51,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE = 33;
     private final AppRepository appRepository;
+    Button sendData, stopTask;
     private TextView jsonView;
 
     public MainActivity() {
@@ -62,13 +56,28 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         requestPermissions(new String[]{"android.permission.ACCESS_FINE_LOCATION"}, REQUEST_CODE);
-        jsonView = findViewById(R.id.json_view);
 
+        jsonView = findViewById(R.id.json_view);
+        sendData = findViewById(R.id.btn_send_data);
+        stopTask = findViewById(R.id.btn_stop_task);
         appRepository.checkUser();
         postUser();
-//        postUserData();
-//        new Timer().schedule(new CustomTimer(), 10000, 5000);
+        Timer timer = initialzeTimerTask();
 
+        sendData.setOnClickListener(v -> postUserData());
+        stopTask.setOnClickListener(v -> {
+            timer.cancel();
+            timer.purge();
+        });
+
+
+    }
+
+    @NonNull
+    private Timer initialzeTimerTask() {
+        Timer timer = new Timer();
+        timer.schedule(new CustomTimer(), 10000, 5000);
+        return timer;
     }
 
     private class CustomTimer extends TimerTask {
