@@ -22,14 +22,4 @@ public class SavedTime extends RealmObject {
         this.altitude = altitude;
     }
 
-    @NonNull
-    @Override
-    public String toString() {
-        return "SavedTime{" +
-                "time='" + time + '\'' +
-                ", longitude=" + longitude +
-                ", latitude=" + latitude +
-                ", altitude=" + altitude +
-                '}';
-    }
 }

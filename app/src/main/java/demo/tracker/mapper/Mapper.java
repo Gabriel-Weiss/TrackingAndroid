@@ -76,13 +76,4 @@ public class Mapper {
         return dateDtoList;
     }
 
-    //Set of methods to convert AppUser to UserDto
-    public static UserDto convertAppUserToUserDto(AppUser appUser, List<DateDto> dateDtoList) {
-        UserDto userDto = new UserDto();
-        userDto.setUserId(appUser.userCode);
-        userDto.setUserStatus(appUser.userStatus);
-        userDto.setDates(dateDtoList);
-        return userDto;
-    }
-
 }
