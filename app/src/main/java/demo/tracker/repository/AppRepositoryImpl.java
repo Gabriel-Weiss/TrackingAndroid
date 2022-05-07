@@ -3,7 +3,13 @@ package demo.tracker.repository;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
+
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -13,6 +19,7 @@ import demo.tracker.entity.AppUser;
 import demo.tracker.entity.SavedDate;
 import demo.tracker.entity.SavedTime;
 import io.realm.Realm;
+import io.realm.RealmResults;
 
 public class AppRepositoryImpl {
     private static final String TAG = "AppRepositoryImpl";
@@ -53,11 +60,39 @@ public class AppRepositoryImpl {
         return dates;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void cleanDates() {
+        Realm instance = getRealm();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+        instance.executeTransactionAsync(realm -> {
+            for (SavedDate savedDate : realm.where(SavedDate.class).findAll()) {
+                LocalDate date = LocalDate.parse(savedDate.getDate(), dateFormatter);
+
+                if (LocalDate.now().minusWeeks(2).isAfter(date)) {
+                    SavedDate first = realm.where(SavedDate.class).equalTo("date", savedDate.getDate()).findFirst();
+
+                    if (first != null) {
+                        String s = first.getDate();
+                        first.deleteFromRealm();
+                        Log.d(TAG, "cleanDates() called. Deleted date:" + s);
+                    } else {
+                        Log.d(TAG, "cleanDates: called. Date not existent");
+                    }
+                }
+            }
+        });
+        instance.close();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void saveDateToRealm(double lon, double lat, double alt) {
         Realm instance = getRealm();
 
-        String now = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
-        String today = new SimpleDateFormat("dd-MM-yyyy", Locale.getDefault()).format(new Date());
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String today = LocalDate.now().format(dateFormatter);
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+        String now = LocalTime.now().format(timeFormatter);
         String code = UUID.randomUUID().toString();
 
         instance.executeTransactionAsync(

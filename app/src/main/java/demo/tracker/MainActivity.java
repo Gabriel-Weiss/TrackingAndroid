@@ -4,8 +4,6 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -28,12 +26,9 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.CancellationToken;
-import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
 import com.google.gson.Gson;
 
@@ -82,9 +77,10 @@ public class MainActivity extends AppCompatActivity {
         Button stopTimerTask = findViewById(R.id.stop_task_btn);
 
         checkUser();
+//        timer.schedule(new DeleteDateTimer(), );
         startTimerTask.setOnClickListener(v -> {
             postUser();
-            timer.schedule(new CustomTimer(), 0, 5000);
+            timer.schedule(new SaveDateTimer(), 0, 5000);
         });
         stopTimerTask.setOnClickListener(v -> {
             timer.cancel();
@@ -116,10 +112,17 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private class CustomTimer extends TimerTask {
+    private class SaveDateTimer extends TimerTask {
         @Override
         public void run() {
             getLocation();
+        }
+    }
+
+    private class DeleteDateTimer extends TimerTask {
+        @Override
+        public void run() {
+            appRepository.cleanDates();
         }
     }
 
