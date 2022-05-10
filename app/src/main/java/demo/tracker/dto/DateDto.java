@@ -6,31 +6,31 @@ import java.util.List;
 import java.util.Set;
 
 public class DateDto {
-	private String date;
-	private List<LocationDto> locations = new ArrayList<>();
-	private Set<String> codes = new LinkedHashSet<>();
+    private String date;
+    private List<LocationDto> locations = new ArrayList<>();
+    private Set<String> codes = new LinkedHashSet<>();
 
-	public String getDate() {
-		return date;
-	}
+    public String getDate() {
+        return date;
+    }
 
-	public void setDate(String date) {
-		this.date = date;
-	}
+    public void setDate(String date) {
+        this.date = date;
+    }
 
-	public List<LocationDto> getLocations() {
-		return locations;
-	}
+    public List<LocationDto> getLocations() {
+        return locations;
+    }
 
-	public void setLocations(List<LocationDto> locations) {
-		this.locations = locations;
-	}
+    public void setLocations(List<LocationDto> locations) {
+        this.locations = locations;
+    }
 
-	public Set<String> getCodes() {
-		return codes;
-	}
+    public Set<String> getCodes() {
+        return codes;
+    }
 
-	public void setCodes(Set<String> codes) {
-		this.codes = codes;
-	}
+    public void setCodes(Set<String> codes) {
+        this.codes = codes;
+    }
 }

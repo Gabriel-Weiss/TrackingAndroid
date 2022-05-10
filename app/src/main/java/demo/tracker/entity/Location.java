@@ -6,16 +6,16 @@ import io.realm.RealmObject;
 import io.realm.annotations.RealmClass;
 
 @RealmClass(embedded = true)
-public class SavedTime extends RealmObject {
+public class Location extends RealmObject {
     public String time;
     public Double longitude;
     public Double latitude;
     public Double altitude;
 
-    public SavedTime() {
+    public Location() {
     }
 
-    public SavedTime(String time, Double longitude, Double latitude, Double altitude) {
+    public Location(String time, Double longitude, Double latitude, Double altitude) {
         this.time = time;
         this.longitude = longitude;
         this.latitude = latitude;

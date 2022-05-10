@@ -5,33 +5,28 @@ import android.util.Log;
 
 import androidx.annotation.RequiresApi;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
-import demo.tracker.entity.AppUser;
-import demo.tracker.entity.SavedDate;
-import demo.tracker.entity.SavedTime;
+import demo.tracker.entity.Date;
+import demo.tracker.entity.Location;
+import demo.tracker.entity.User;
 import io.realm.Realm;
-import io.realm.RealmResults;
 
-public class AppRepositoryImpl {
-    private static final String TAG = "AppRepositoryImpl";
-    private static final String CODE = Build.MANUFACTURER + "-" + Build.ID;
+public class AppRepository {
+    private static final String TAG = "AppRepository";
+    private static final String CODE = UUID.randomUUID().toString();
 
     private Realm getRealm() {
         return Realm.getDefaultInstance();
     }
 
-    public AppUser getRealmUser() {
+    public User getRealmUser() {
         Realm instance = getRealm();
-        AppUser appUser = instance.where(AppUser.class).equalTo("userCode", CODE).findFirst();
+        User appUser = instance.where(User.class).equalTo("userCode", CODE).findFirst();
         instance.close();
         return appUser;
     }
@@ -40,7 +35,7 @@ public class AppRepositoryImpl {
         Realm instance = getRealm();
         instance.executeTransactionAsync(
                 realm -> {
-                    AppUser appUser = realm.createObject(AppUser.class, CODE);
+                    User appUser = realm.createObject(User.class, CODE);
                     appUser.setUserPhone(phone);
                 }
         );
@@ -48,14 +43,14 @@ public class AppRepositoryImpl {
         instance.close();
     }
 
-    public AppUser readUserFromRealm() {
+    public User readUserFromRealm() {
         Realm instance = getRealm();
         return instance.copyFromRealm(getRealmUser());
     }
 
-    public List<SavedDate> readDatesFromRealm() {
+    public List<Date> readDatesFromRealm() {
         Realm instance = getRealm();
-        List<SavedDate> dates = instance.copyFromRealm(instance.where(SavedDate.class).findAll());
+        List<Date> dates = instance.copyFromRealm(instance.where(Date.class).findAll());
         instance.close();
         return dates;
     }
@@ -66,18 +61,19 @@ public class AppRepositoryImpl {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
         instance.executeTransactionAsync(realm -> {
-            for (SavedDate savedDate : realm.where(SavedDate.class).findAll()) {
+            for (Date savedDate : realm.where(Date.class).findAll()) {
                 LocalDate date = LocalDate.parse(savedDate.getDate(), dateFormatter);
+                Log.e(TAG, "cleanDates: " + date.format(dateFormatter));
 
-                if (LocalDate.now().minusWeeks(2).isAfter(date)) {
-                    SavedDate first = realm.where(SavedDate.class).equalTo("date", savedDate.getDate()).findFirst();
+                if (LocalDate.now().minusDays(2).isAfter(date)) {
+                    Date first = realm.where(Date.class).equalTo("date", savedDate.getDate()).findFirst();
 
                     if (first != null) {
                         String s = first.getDate();
                         first.deleteFromRealm();
-                        Log.d(TAG, "cleanDates() called. Deleted date:" + s);
+                        Log.e(TAG, "cleanDates() called. Deleted date:" + s);
                     } else {
-                        Log.d(TAG, "cleanDates: called. Date not existent");
+                        Log.e(TAG, "cleanDates: called. Date not existent");
                     }
                 }
             }
@@ -97,18 +93,18 @@ public class AppRepositoryImpl {
 
         instance.executeTransactionAsync(
                 realm -> {
-                    SavedDate savedDate = realm.where(SavedDate.class).equalTo("date", today).findFirst();
+                    Date savedDate = realm.where(Date.class).equalTo("date", today).findFirst();
                     if (savedDate == null) {
-                        SavedDate date = realm.createObject(SavedDate.class, today);
+                        Date date = realm.createObject(Date.class, today);
                         if (lon != 0 || lat != 0 || alt != 0) {
-                            SavedTime time = new SavedTime(now, lon, lat, alt);
+                            Location time = new Location(now, lon, lat, alt);
                             date.times.add(time);
                         }
                         date.codes.add(code);
                         Log.d(TAG, "saveDataToRealm(): Date non existent saving: savedInstance = [" + date + "]");
                     } else {
                         if (lon != 0 || lat != 0 || alt != 0) {
-                            SavedTime time = new SavedTime(now, lon, lat, alt);
+                            Location time = new Location(now, lon, lat, alt);
                             savedDate.times.add(time);
                         }
                         savedDate.codes.add(code);

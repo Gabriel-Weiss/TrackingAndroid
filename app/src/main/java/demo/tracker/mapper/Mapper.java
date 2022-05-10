@@ -11,67 +11,57 @@ import java.util.Set;
 
 import demo.tracker.dto.DateDto;
 import demo.tracker.dto.LocationDto;
-import demo.tracker.dto.UserDto;
-import demo.tracker.entity.AppUser;
-import demo.tracker.entity.SavedDate;
-import demo.tracker.entity.SavedTime;
+import demo.tracker.entity.Date;
+import demo.tracker.entity.Location;
 
 public class Mapper {
 
-    //Set of methods that convert SavedTime entity to LocationDto and vice verso
-    public static LocationDto convertSavedTimeToLocationDto(SavedTime savedTime) {
+    //Set of methods that convert Location entity to LocationDto and vice verso
+    public static LocationDto convertSavedTimeToLocationDto(Location location) {
         LocationDto locationDto = new LocationDto();
-        locationDto.setLongitude(savedTime.longitude);
-        locationDto.setLatitude(savedTime.latitude);
-        locationDto.setAltitude(savedTime.altitude);
-        locationDto.setTime(savedTime.time);
+        locationDto.setLongitude(location.longitude);
+        locationDto.setLatitude(location.latitude);
+        locationDto.setAltitude(location.altitude);
+        locationDto.setTime(location.time);
         return locationDto;
     }
 
-    public static List<LocationDto> convertListSavedTimeToLocationDto(List<SavedTime> savedTimes) {
-        List<LocationDto> locationDtoList = new ArrayList<>(savedTimes.size());
-        for (SavedTime savedTime : savedTimes) {
-            locationDtoList.add(convertSavedTimeToLocationDto(savedTime));
+    public static List<LocationDto> convertListSavedTimeToLocationDto(List<Location> locations) {
+        List<LocationDto> locationDtoList = new ArrayList<>(locations.size());
+        for (Location location : locations) {
+            locationDtoList.add(convertSavedTimeToLocationDto(location));
         }
         return locationDtoList;
     }
 
-    public static SavedTime convertLocationDtoToSavedTime(LocationDto locationDto) {
-        SavedTime savedTime = new SavedTime();
-        savedTime.time = locationDto.getTime();
-        savedTime.altitude = locationDto.getAltitude();
-        savedTime.latitude = locationDto.getLatitude();
-        savedTime.longitude = locationDto.getLongitude();
-        return savedTime;
+    public static Location convertLocationDtoToSavedTime(LocationDto locationDto) {
+        Location location = new Location();
+        location.time = locationDto.getTime();
+        location.altitude = locationDto.getAltitude();
+        location.latitude = locationDto.getLatitude();
+        location.longitude = locationDto.getLongitude();
+        return location;
     }
 
-    public static List<SavedTime> convertListLocationDtoToSavedTime(List<LocationDto> locationDtoList) {
-        List<SavedTime> savedTimes = new ArrayList<>(locationDtoList.size());
-        for (LocationDto locationDto : locationDtoList) {
-            savedTimes.add(convertLocationDtoToSavedTime(locationDto));
-        }
-        return savedTimes;
-    }
-
-    //Set of methods that convert SavedDate entity to DateDto and vice verso
+    //Set of methods that convert Date entity to DateDto and vice verso
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public static DateDto convertSavedDateToDateDto(SavedDate savedDate) {
+    public static DateDto convertSavedDateToDateDto(Date date) {
         DateDto dateDto = new DateDto();
-        dateDto.setDate(savedDate.getDate());
-        Set<String> codes = new LinkedHashSet<>(savedDate.codes.size());
-        savedDate.getCodes().iterator().forEachRemaining(codes::add);
+        dateDto.setDate(date.getDate());
+        Set<String> codes = new LinkedHashSet<>(date.codes.size());
+        date.getCodes().iterator().forEachRemaining(codes::add);
         dateDto.setCodes(codes);
-        List<SavedTime> savedTimes = new ArrayList<>(savedDate.times.size());
-        savedDate.getTimes().iterator().forEachRemaining(savedTimes::add);
-        dateDto.setLocations(convertListSavedTimeToLocationDto(savedTimes));
+        List<Location> locations = new ArrayList<>(date.times.size());
+        date.getTimes().iterator().forEachRemaining(locations::add);
+        dateDto.setLocations(convertListSavedTimeToLocationDto(locations));
         return dateDto;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public static List<DateDto> convertListSaveDateToDateDto(List<SavedDate> savedDates) {
-        List<DateDto> dateDtoList = new ArrayList<>(savedDates.size());
-        for (SavedDate savedDate : savedDates) {
-            dateDtoList.add(convertSavedDateToDateDto(savedDate));
+    public static List<DateDto> convertListSaveDateToDateDto(List<Date> dates) {
+        List<DateDto> dateDtoList = new ArrayList<>(dates.size());
+        for (Date date : dates) {
+            dateDtoList.add(convertSavedDateToDateDto(date));
         }
         return dateDtoList;
     }

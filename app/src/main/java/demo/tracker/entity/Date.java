@@ -6,22 +6,22 @@ import io.realm.RealmList;
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 
-public class SavedDate extends RealmObject {
+public class Date extends RealmObject {
     @PrimaryKey
     public String date;
-    public RealmList<SavedTime> times = new RealmList<>();
+    public RealmList<Location> times = new RealmList<>();
     public RealmList<String> codes = new RealmList<>();
 
-    public SavedDate() {
+    public Date() {
     }
 
-    public SavedDate(String date, RealmList<SavedTime> times, RealmList<String> codes) {
+    public Date(String date, RealmList<Location> times, RealmList<String> codes) {
         this.date = date;
         this.times = times;
         this.codes = codes;
     }
 
-    public void addTimes(SavedTime time) {
+    public void addTimes(Location time) {
         this.times.add(time);
     }
 
@@ -33,11 +33,11 @@ public class SavedDate extends RealmObject {
         this.date = date;
     }
 
-    public RealmList<SavedTime> getTimes() {
+    public RealmList<Location> getTimes() {
         return times;
     }
 
-    public void setTimes(RealmList<SavedTime> times) {
+    public void setTimes(RealmList<Location> times) {
         this.times = times;
     }
 
@@ -52,7 +52,7 @@ public class SavedDate extends RealmObject {
     @NonNull
     @Override
     public String toString() {
-        return "SavedDate{" +
+        return "Date{" +
                 "date='" + date + '\'' +
                 ", times=" + times +
                 ", codes=" + codes +

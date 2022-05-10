@@ -3,13 +3,13 @@ package demo.tracker.entity;
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 
-public class AppUser extends RealmObject {
+public class User extends RealmObject {
     @PrimaryKey
     public String userCode;
     public String userPhone;
     public boolean userStatus;
 
-    public AppUser() {
+    public User() {
     }
 
     public String getUserCode() {

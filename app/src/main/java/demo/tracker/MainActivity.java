@@ -15,6 +15,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
@@ -36,15 +37,16 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import demo.tracker.dto.DateDto;
 import demo.tracker.dto.UserDto;
-import demo.tracker.entity.AppUser;
-import demo.tracker.entity.SavedDate;
+import demo.tracker.entity.Date;
+import demo.tracker.entity.User;
 import demo.tracker.mapper.Mapper;
-import demo.tracker.repository.AppRepositoryImpl;
+import demo.tracker.repository.AppRepository;
 import demo.tracker.utilities.Utilities;
 
 @RequiresApi(api = Build.VERSION_CODES.O)
@@ -52,42 +54,56 @@ public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_CODE = 10;
-    private final AppRepositoryImpl appRepository = new AppRepositoryImpl();
+    private AppRepository appRepository;
     private PopupWindow popupWindow;
-    private final Timer timer = new Timer();
+    private ScheduledExecutorService scheduleTaskExecutor;
     private TextView jsonView;
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        ActivityCompat.requestPermissions(
-                MainActivity.this,
-                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                REQUEST_CODE
-        );
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        appRepository = new AppRepository();
         jsonView = findViewById(R.id.json_view);
-        Button sendUserData = findViewById(R.id.btn_send_location);
-        Button startTimerTask = findViewById(R.id.start_task_btn);
-        Button stopTimerTask = findViewById(R.id.stop_task_btn);
+        Button sendData = findViewById(R.id.btn_send_location);
+        Button startExecutor = findViewById(R.id.start_task_btn);
+        Button stopExecutor = findViewById(R.id.stop_task_btn);
+        scheduleTaskExecutor = Executors
+                .newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
         checkUser();
-//        timer.schedule(new DeleteDateTimer(), );
-        startTimerTask.setOnClickListener(v -> {
-            postUser();
-            timer.schedule(new SaveDateTimer(), 0, 5000);
-        });
-        stopTimerTask.setOnClickListener(v -> {
-            timer.cancel();
-            timer.purge();
-        });
-        sendUserData.setOnClickListener(v -> postUserData());
+        scheduleTaskExecutor.scheduleAtFixedRate(appRepository::cleanDates, 0, 2, TimeUnit.MINUTES);
+        scheduleTaskExecutor.scheduleAtFixedRate(this::getLocation, 0, 2, TimeUnit.MINUTES);
 
+        startExecutor.setOnClickListener(v -> {
+            if (scheduleTaskExecutor.isShutdown()) {
+                scheduleTaskExecutor.scheduleAtFixedRate(appRepository::cleanDates, 0, 2, TimeUnit.DAYS);
+                scheduleTaskExecutor.scheduleAtFixedRate(this::getLocation, 0, 2, TimeUnit.MINUTES);
+            }
+        });
+        stopExecutor.setOnClickListener(v -> scheduleTaskExecutor.shutdownNow());
+        sendData.setOnClickListener(v -> postUserData());
+
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (ActivityCompat.checkSelfPermission(
+                MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(
+                MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(getApplicationContext(), "Locatia a fost permisa", Toast.LENGTH_SHORT).show();
+        } else {
+            ActivityCompat.requestPermissions(
+                    MainActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_CODE
+            );
+        }
     }
 
     public void checkUser() {
@@ -109,21 +125,8 @@ public class MainActivity extends AppCompatActivity {
         saveUser.setOnClickListener(v -> {
             appRepository.saveUserToRealm(editText.getText().toString());
             popupWindow.dismiss();
+            postUser();
         });
-    }
-
-    private class SaveDateTimer extends TimerTask {
-        @Override
-        public void run() {
-            getLocation();
-        }
-    }
-
-    private class DeleteDateTimer extends TimerTask {
-        @Override
-        public void run() {
-            appRepository.cleanDates();
-        }
     }
 
     void getLocation() {
@@ -138,17 +141,17 @@ public class MainActivity extends AppCompatActivity {
         ) == PackageManager.PERMISSION_GRANTED) {
 
             fusedLocationProviderClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, new CancellationToken() {
-                @Override
-                public boolean isCancellationRequested() {
-                    return false;
-                }
+                        @Override
+                        public boolean isCancellationRequested() {
+                            return false;
+                        }
 
-                @NonNull
-                @Override
-                public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
-                    return null;
-                }
-            })
+                        @NonNull
+                        @Override
+                        public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
+                            return null;
+                        }
+                    })
                     .addOnSuccessListener(location -> {
                         if (location != null) {
                             appRepository.saveDateToRealm(location.getLongitude(), location.getLatitude(), location.getAltitude());
@@ -168,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
         String url = Utilities.getProperty("post_user_url", getApplicationContext());
 
-        AppUser appUser = appRepository.readUserFromRealm();
+        User appUser = appRepository.readUserFromRealm();
         JSONObject jsonUser = new JSONObject();
         try {
             jsonUser.put("userId", appUser.getUserCode());
@@ -184,14 +187,15 @@ public class MainActivity extends AppCompatActivity {
                 error -> Log.e("onErrorResponse: ", error.toString()));
 
         requestQueue.add(jsonObjectRequest);
+        Log.e(TAG, "postUser: called");
     }
 
     public void postUserData() {
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
         String url = Utilities.getProperty("post_user_url", getApplicationContext());
 
-        AppUser appUser = appRepository.readUserFromRealm();
-        List<SavedDate> dates = appRepository.readDatesFromRealm();
+        User appUser = appRepository.readUserFromRealm();
+        List<Date> dates = appRepository.readDatesFromRealm();
         List<DateDto> dateDtoList = Mapper.convertListSaveDateToDateDto(dates);
 
         UserDto userDto = new UserDto();
@@ -217,5 +221,6 @@ public class MainActivity extends AppCompatActivity {
                 error -> Log.e("onErrorResponse: ", error.toString()));
 
         requestQueue.add(jsonObjectRequest);
+        Log.e(TAG, "postUserData: called");
     }
 }
